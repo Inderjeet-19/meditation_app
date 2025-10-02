@@ -1,15 +1,4 @@
-#!/usr/bin/env python3
-"""
-Meditation App — Terminal version
-Features:
- - Guided meditations (5/10/15 min)
- - Custom-length timer
- - Box-breathing guided exercise
- - Short body-scan guided meditation
- - Session logging to meditation_log.csv
- - Simple progress display and gentle bells
-No external dependencies.
-"""
+# Full Meditation App with Notes + Loving-Kindness Meditation
 
 import time
 import sys
@@ -19,7 +8,7 @@ from datetime import datetime
 
 LOG_FILE = "meditation_log.csv"
 
-# Utility functions
+# -------------------- Utility Functions --------------------
 
 def clear():
     if os.name == "nt":
@@ -28,24 +17,19 @@ def clear():
         _ = os.system("clear")
 
 def bell():
-    """
-    Try to play a gentle bell:
-    - On Windows, try winsound.Beep (if available)
-    - Otherwise print ASCII bell (may or may not beep)
-    """
     try:
         if os.name == "nt":
             import winsound
             winsound.Beep(440, 300)
         else:
-            # terminal bell
             sys.stdout.write("\a")
             sys.stdout.flush()
     except Exception:
-        # fallback: print a star separator
         print("\n***\n")
 
 def log_session(kind, duration_min, notes=""):
+    if notes == "":
+        notes = input("Optional: Add a short note about this session (press Enter to skip): ")
     row = {
         "timestamp": datetime.now().isoformat(sep=" ", timespec="seconds"),
         "type": kind,
@@ -77,9 +61,9 @@ def progress_bar(total_seconds, prefix=""):
         sys.stdout.write(f"\r{prefix} {bar} {mins_left:02d}:{secs_left:02d} remaining")
         sys.stdout.flush()
         time.sleep(0.5)
-    sys.stdout.write("\r" + " " * 80 + "\r")  # clear line
+    sys.stdout.write("\r" + " " * 80 + "\r")
 
-# Guided scripts
+# -------------------- Guided Meditations --------------------
 
 GUIDED_5 = [
     (0, "Sit comfortably, spine straight, hands relaxed."),
@@ -115,7 +99,19 @@ GUIDED_15 = [
     (880, "When ready, open your eyes and take this calm into your next minutes."),
 ]
 
-# Main features
+GUIDED_LOVING_KINDNESS = [
+    (0, "Sit comfortably, close your eyes, and take a deep breath."),
+    (15, "Bring to mind someone you care about and silently wish them happiness."),
+    (60, "Now extend this feeling to yourself: wish yourself peace and well-being."),
+    (120, "Think of a neutral person and wish them kindness and joy."),
+    (180, "Now extend kindness to someone you have difficulties with, wish them well."),
+    (300, "Feel your heart expand with compassion for all beings."),
+    (480, "Take a few deep breaths and silently repeat 'May all beings be happy, safe, and free.'"),
+    (540, "Gently bring attention back to your breath."),
+    (570, "Slowly open your eyes when ready, carrying this calm with you."),
+]
+
+# -------------------- Session Functions --------------------
 
 def guided_session(script, duration_min):
     clear()
@@ -127,14 +123,12 @@ def guided_session(script, duration_min):
         elapsed = time.time() - start_time
         if elapsed >= total_seconds:
             break
-        # play any script lines whose time has come
         while i < len(script) and elapsed >= script[i][0]:
             print()
             print_centered(script[i][1])
             i += 1
         remaining = max(0, total_seconds - elapsed)
         progress_bar(remaining, prefix="Guided:")
-        # small sleep already handled inside progress_bar
     bell()
     print_centered("Session complete — gently come back when ready.")
     log_session(f"Guided {duration_min} min", duration_min)
@@ -151,10 +145,6 @@ def custom_timer(duration_min):
     input("Press Enter to return to menu...")
 
 def box_breathing(cycles=4, inhale=4, hold=4, exhale=4):
-    """
-    Box breathing: inhale-hold-exhale-hold with equal counts.
-    cycles: how many full cycles to run.
-    """
     clear()
     print_centered("Box Breathing Exercise")
     print()
@@ -163,22 +153,18 @@ def box_breathing(cycles=4, inhale=4, hold=4, exhale=4):
     time.sleep(1.2)
     for c in range(1, cycles + 1):
         print(f"\nCycle {c}/{cycles}")
-        # Inhale
         for t in range(inhale, 0, -1):
             sys.stdout.write(f"\rInhale  : {t:2d} ")
             sys.stdout.flush()
             time.sleep(1)
-        # Hold
         for t in range(hold, 0, -1):
             sys.stdout.write(f"\rHold    : {t:2d} ")
             sys.stdout.flush()
             time.sleep(1)
-        # Exhale
         for t in range(exhale, 0, -1):
             sys.stdout.write(f"\rExhale  : {t:2d} ")
             sys.stdout.flush()
             time.sleep(1)
-        # Hold after exhale
         for t in range(hold, 0, -1):
             sys.stdout.write(f"\rHold    : {t:2d} ")
             sys.stdout.flush()
@@ -190,10 +176,6 @@ def box_breathing(cycles=4, inhale=4, hold=4, exhale=4):
     input("Press Enter to return to menu...")
 
 def body_scan(duration_min=10):
-    """
-    A simple body-scan guided meditation that walks down the body.
-    The script is timed proportionally to the duration.
-    """
     clear()
     parts = [
         "top of the head — notice sensations there",
@@ -234,10 +216,12 @@ def show_log():
         if not rows:
             print("No sessions logged yet.")
         else:
-            for r in rows[-20:]:  # show last 20 entries
+            for r in rows[-20:]:
                 print(f"{r['timestamp']:20} | {r['type'][:20]:20} | {r['duration_min']:>5} min | {r['notes']}")
     print("-" * 60)
     input("Press Enter to return to menu...")
+
+# -------------------- Main Menu --------------------
 
 def main_menu():
     while True:
@@ -253,9 +237,11 @@ def main_menu():
         print(" 5) Box breathing exercise")
         print(" 6) Body-scan meditation (10 min default)")
         print(" 7) View session log")
+        print(" 8) Guided — Loving-kindness meditation (10 min)")
         print(" 0) Exit")
         print()
         choice = input("Enter choice: ").strip()
+
         if choice == "1":
             guided_session(GUIDED_5, 5)
         elif choice == "2":
@@ -290,6 +276,8 @@ def main_menu():
                 time.sleep(1.2)
         elif choice == "7":
             show_log()
+        elif choice == "8":
+            guided_session(GUIDED_LOVING_KINDNESS, 10)
         elif choice == "0":
             clear()
             print_centered("May you have a calm and peaceful day — goodbye.")
