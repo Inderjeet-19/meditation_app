@@ -1,1 +1,1 @@
-# This is a new cpp project
+# This is a Meditation app made for mindfulness and clarity.
